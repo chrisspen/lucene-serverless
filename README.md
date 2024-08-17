@@ -25,7 +25,12 @@ Read the blog post about it [here](https://medium.com/@arsenyyankovski/serverles
 - AWS account
 
 ## Run it
-1. Replace region, vpc id and subnets in the `serverless.yml` file
+1. Define environment variables for the org, region, vpc id and subnets in the `serverless.yml` file:
+
+    export LUCENE_SERVERLESS_ORG=<org>
+    export LUCENE_SERVERLESS_VPC_ID=<vpc-id>
+    export LUCENE_SERVERLESS_SUBNET_ID1=<subnet-id1>
+    export LUCENE_SERVERLESS_SUBNET_ID2=<subnet-id2>
 
 2. Deploy the stack
    `npx sls deploy`

@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: podgist
+org: ${env:LUCENE_SERVERLESS_ORG}
 service: lucene-serverless
 variablesResolutionMode: 20210219
 
@@ -7,12 +7,14 @@ variablesResolutionMode: 20210219
 custom:
   name: ${sls:stage}-${self:service}
   region: ${opt:region, "us-east-1"}
-  vpcId: ${env:PODGIST_LUCENE_SERVERLESS_VPC_ID}
-  subnetId1: ${env:PODGIST_LUCENE_SERVERLESS_SUBNET_ID1}
-  subnetId2: ${env:PODGIST_LUCENE_SERVERLESS_SUBNET_ID2}
+  vpcId: ${env:LUCENE_SERVERLESS_VPC_ID}
+  subnetId1: ${env:LUCENE_SERVERLESS_SUBNET_ID1}
+  subnetId2: ${env:LUCENE_SERVERLESS_SUBNET_ID2}
+  javaVersion: java11
 
 provider:
   name: aws
+  profile: ${env:LUCENE_SERVERLESS_PROFILE}
   region: ${self:custom.region}
   versionFunctions: false
   apiGateway:
@@ -39,7 +41,7 @@ package:
 functions:
   query:
     name: ${self:custom.name}-query
-    runtime: provided
+    runtime: ${self.custom.javaVersion}
     handler: native.handler
     provisionedConcurrency: 1 # ~$2.5/m, lower cold start time
     memorySize: 256
@@ -61,7 +63,7 @@ functions:
 
   index:
     name: ${self:custom.name}-index
-    runtime: provided
+    runtime: ${self.custom.javaVersion}
     handler: native.handler
     reservedConcurrency: 1
     memorySize: 256
@@ -88,7 +90,7 @@ functions:
 
   enqueue-index:
     name: ${self:custom.name}-enqueue-index
-    runtime: provided
+    runtime: ${self.custom.javaVersion}
     handler: native.handler
     memorySize: 256
     package:
@@ -106,7 +108,7 @@ functions:
 
   delete-index:
     name: ${self:custom.name}-delete-index
-    runtime: provided
+    runtime: ${self.custom.javaVersion}
     handler: native.handler
     memorySize: 256
     dependsOn:
