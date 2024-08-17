@@ -28,10 +28,10 @@ Read the blog post about it [here](https://medium.com/@arsenyyankovski/serverles
 1. Replace region, vpc id and subnets in the `serverless.yml` file
 
 2. Deploy the stack
-   `sls deploy`
+   `npx sls deploy`
 
 3. Don't forget to remove it if you're not planning to use it
-   `sls remove`
+   `npx sls remove`
 
 ### Index a document
 

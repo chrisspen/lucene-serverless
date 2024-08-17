@@ -1,0 +1,17 @@
+{
+  "name": "lucene-serverless",
+  "version": "1.0.0",
+  "description": "This project demonstrates a proof-of-concept serverless full-text search solution built with Apache Lucene and Quarkus framework.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "serverless deploy",
+    "remove": "serverless remove"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "^4.1.22"
+  }
+}

@@ -1,3 +1,5 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: podgist
 service: lucene-serverless
 variablesResolutionMode: 20210219
 
@@ -8,8 +10,6 @@ custom:
   vpcId: vpc-00690f6e
   subnetId1: subnet-039f496e
   subnetId2: subnet-0c0af8ea
-
-frameworkVersion: ">=1.56.1"
 
 provider:
   name: aws
