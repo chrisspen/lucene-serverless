@@ -3,13 +3,13 @@ org: podgist
 service: lucene-serverless
 variablesResolutionMode: 20210219
 
-# TODO: replace all variables below
+# NOTE: Remember to define your environment variables for the custom fields below.
 custom:
   name: ${sls:stage}-${self:service}
   region: ${opt:region, "us-east-1"}
-  vpcId: vpc-00690f6e
-  subnetId1: subnet-039f496e
-  subnetId2: subnet-0c0af8ea
+  vpcId: ${env:PODGIST_LUCENE_SERVERLESS_VPC_ID}
+  subnetId1: ${env:PODGIST_LUCENE_SERVERLESS_SUBNET_ID1}
+  subnetId2: ${env:PODGIST_LUCENE_SERVERLESS_SUBNET_ID2}
 
 provider:
   name: aws
