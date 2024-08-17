@@ -41,7 +41,7 @@ package:
 functions:
   query:
     name: ${self:custom.name}-query
-    runtime: ${self.custom.javaVersion}
+    runtime: ${self:custom.javaVersion}
     handler: native.handler
     provisionedConcurrency: 1 # ~$2.5/m, lower cold start time
     memorySize: 256
@@ -63,7 +63,7 @@ functions:
 
   index:
     name: ${self:custom.name}-index
-    runtime: ${self.custom.javaVersion}
+    runtime: ${self:custom.javaVersion}
     handler: native.handler
     reservedConcurrency: 1
     memorySize: 256
@@ -90,7 +90,7 @@ functions:
 
   enqueue-index:
     name: ${self:custom.name}-enqueue-index
-    runtime: ${self.custom.javaVersion}
+    runtime: ${self:custom.javaVersion}
     handler: native.handler
     memorySize: 256
     package:
@@ -108,7 +108,7 @@ functions:
 
   delete-index:
     name: ${self:custom.name}-delete-index
-    runtime: ${self.custom.javaVersion}
+    runtime: ${self:custom.javaVersion}
     handler: native.handler
     memorySize: 256
     dependsOn:
