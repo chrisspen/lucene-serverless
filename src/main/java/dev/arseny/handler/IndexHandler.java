@@ -70,13 +70,18 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             try {
                 if (!termsToDelete.isEmpty()) {
                     writer.deleteDocuments(termsToDelete.toArray(new Term[0]));
+                    writer.commit();
                     LOG.info("Deleted documents matching terms: " + termsToDelete);
+                }else{
+                    LOG.info("Nothing to delete.");
                 }
                 if (!documents.isEmpty()) {
                     writer.addDocuments(documents);
+                    writer.commit();
+                    LOG.info("Index successfully updated for " + request.getIndexName());
+                }else{
+                    LOG.info("Nothing to add.");
                 }
-                writer.commit();
-                LOG.info("Index successfully updated for " + request.getIndexName());
             } catch (IOException e) {
                 LOG.error("Error updating index for " + request.getIndexName(), e);
             }
