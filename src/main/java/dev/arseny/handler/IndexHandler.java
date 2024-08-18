@@ -42,6 +42,13 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             requests.add(RequestUtils.parseIndexRequest(record.getBody()));
         }
 
+        indexDocuments(requests);
+
+        return new APIGatewayProxyResponseEvent().withStatusCode(200);
+    }
+
+    private void indexDocuments(List<IndexRequest> requests) {
+
         Map<String, IndexWriter> writerMap = new HashMap<>(); // {indexName: writer}
 
         for (IndexRequest request : requests) {
@@ -64,6 +71,15 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
                 } else {
                     Document document = new Document();
                     for (Map.Entry<String, Object> entry : requestDocument.entrySet()) {
+
+                        // Skip missing or invalid key/value pairs.
+                        // Without this, if someone passes a document via an ARN call like {'slug': null}
+                        // then the document.add() below will blow up since nulls aren't allowed.
+                        if (entry.getKey() == null || entry.getValue() == null) {
+                            LOG.warn("Encountered null key or value in document entry: " + entry);
+                            continue;
+                        }
+
                         if ("uuid".equals(entry.getKey())) {
                             // UUIDs must be Strings so they can be exactly matched for deletion by Term later on.
                             FieldType fieldType = new FieldType();
@@ -83,14 +99,12 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             try {
                 if (!termsToDelete.isEmpty()) {
                     writer.deleteDocuments(termsToDelete.toArray(new Term[0]));
-                    writer.commit();
                     LOG.info("Deleted documents matching terms: " + termsToDelete);
                 } else {
                     LOG.info("Nothing to delete.");
                 }
                 if (!documents.isEmpty()) {
                     writer.addDocuments(documents);
-                    writer.commit();
                     LOG.info("Index successfully updated for " + request.getIndexName());
                 } else {
                     LOG.info("Nothing to add.");
@@ -100,6 +114,22 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             }
         }
 
+        commitChanges(writerMap);
+        closeWriters(writerMap);
+
+    }
+
+    private void commitChanges(Map<String, IndexWriter> writerMap) {
+        for (IndexWriter writer : writerMap.values()) {
+            try {
+                writer.commit();
+            } catch (IOException e) {
+                LOG.error("Error committing IndexWriter", e);
+            }
+        }
+    }
+
+    private void closeWriters(Map<String, IndexWriter> writerMap) {
         for (IndexWriter writer : writerMap.values()) {
             try {
                 writer.close();
@@ -107,7 +137,6 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
                 LOG.error("Error closing IndexWriter", e);
             }
         }
-
-        return new APIGatewayProxyResponseEvent().withStatusCode(200);
     }
+
 }
