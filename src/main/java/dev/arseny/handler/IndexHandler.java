@@ -11,6 +11,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
@@ -38,7 +39,7 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             requests.add(RequestUtils.parseIndexRequest(record.getBody()));
         }
 
-        Map<String, IndexWriter> writerMap = new HashMap<>();
+        Map<String, IndexWriter> writerMap = new HashMap<>(); // {indexName: writer}
 
         for (IndexRequest request : requests) {
             IndexWriter writer;
@@ -50,28 +51,42 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
             }
 
             List<Document> documents = new ArrayList<>();
+            List<Term> termsToDelete = new ArrayList<>();
 
             for (Map<String, Object> requestDocument : request.getDocuments()) {
-                Document document = new Document();
-                for (Map.Entry<String, Object> entry : requestDocument.entrySet()) {
-                    document.add(new TextField(entry.getKey(), entry.getValue().toString(), Field.Store.YES));
+                if (Boolean.TRUE.equals(requestDocument.get("deleted")) && requestDocument.containsKey("uuid")) {
+                    Term term = new Term("uuid", requestDocument.get("uuid").toString());
+                    termsToDelete.add(term);
+                    LOG.info("Scheduled document for deletion: " + term.toString());
+                } else {
+                    Document document = new Document();
+                    for (Map.Entry<String, Object> entry : requestDocument.entrySet()) {
+                        document.add(new TextField(entry.getKey(), entry.getValue().toString(), Field.Store.YES));
+                    }
+                    documents.add(document);
                 }
-                documents.add(document);
             }
 
             try {
-                writer.addDocuments(documents);
+                if (!termsToDelete.isEmpty()) {
+                    writer.deleteDocuments(termsToDelete.toArray(new Term[0]));
+                    LOG.info("Deleted documents matching terms: " + termsToDelete);
+                }
+                if (!documents.isEmpty()) {
+                    writer.addDocuments(documents);
+                }
+                writer.commit();
+                LOG.info("Index successfully updated for " + request.getIndexName());
             } catch (IOException e) {
-                LOG.error(e);
+                LOG.error("Error updating index for " + request.getIndexName(), e);
             }
         }
 
         for (IndexWriter writer : writerMap.values()) {
             try {
-                writer.commit();
                 writer.close();
             } catch (IOException e) {
-                LOG.error(e);
+                LOG.error("Error closing IndexWriter", e);
             }
         }
 
