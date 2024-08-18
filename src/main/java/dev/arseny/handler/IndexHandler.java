@@ -9,7 +9,10 @@ import dev.arseny.model.IndexRequest;
 import dev.arseny.service.IndexWriterService;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.jboss.logging.Logger;
@@ -61,7 +64,17 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
                 } else {
                     Document document = new Document();
                     for (Map.Entry<String, Object> entry : requestDocument.entrySet()) {
-                        document.add(new TextField(entry.getKey(), entry.getValue().toString(), Field.Store.YES));
+                        if ("uuid".equals(entry.getKey())) {
+                            // UUIDs must be Strings so they can be exactly matched for deletion by Term later on.
+                            FieldType fieldType = new FieldType();
+                            fieldType.setTokenized(false);
+                            fieldType.setStored(true);
+                            fieldType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+                            Field idField = new Field(entry.getKey(), entry.getValue().toString(), fieldType);
+                            document.add(idField);
+                        } else {
+                            document.add(new TextField(entry.getKey(), entry.getValue().toString(), Field.Store.YES));
+                        }
                     }
                     documents.add(document);
                 }
@@ -72,14 +85,14 @@ public class IndexHandler implements RequestHandler<SQSEvent, APIGatewayProxyRes
                     writer.deleteDocuments(termsToDelete.toArray(new Term[0]));
                     writer.commit();
                     LOG.info("Deleted documents matching terms: " + termsToDelete);
-                }else{
+                } else {
                     LOG.info("Nothing to delete.");
                 }
                 if (!documents.isEmpty()) {
                     writer.addDocuments(documents);
                     writer.commit();
                     LOG.info("Index successfully updated for " + request.getIndexName());
-                }else{
+                } else {
                     LOG.info("Nothing to add.");
                 }
             } catch (IOException e) {
