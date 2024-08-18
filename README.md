@@ -24,6 +24,11 @@ Read the blog post about it [here](https://medium.com/@arsenyyankovski/serverles
 - [Serverless framework >= 1.56.1](https://serverless.com/framework/docs/getting-started/)
 - AWS account
 
+## Build it
+
+    mvn clean compile
+    mvn package
+
 ## Run it
 1. Define environment variables for the org, region, vpc id and subnets in the `serverless.yml` file:
 
