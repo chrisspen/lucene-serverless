@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: function.handler
+      Runtime: provided.al2  # Match the runtime you're using
+      CodeUri: target/function.zip  # Path to your ZIP file
+      MemorySize: 256
+      Timeout: 15
+      Environment:
+        Variables:
+          STAGE: prod
+          DISABLE_SIGNAL_HANDLERS: true
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /index
+            Method: post

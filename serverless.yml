@@ -10,7 +10,7 @@ custom:
   vpcId: ${env:LUCENE_SERVERLESS_VPC_ID}
   subnetId1: ${env:LUCENE_SERVERLESS_SUBNET_ID1}
   subnetId2: ${env:LUCENE_SERVERLESS_SUBNET_ID2}
-  javaVersion: java11
+  javaVersion: provided.al2
 
 provider:
   name: aws
