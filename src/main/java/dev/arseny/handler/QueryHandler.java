@@ -21,6 +21,10 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 
 @Named("query")
 public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -31,6 +35,18 @@ public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent,
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
+
+        // Do some simple CORS access checking. Not super secure but it's better than nothing.
+        String allowedDomains = System.getenv("ALLOWED_DOMAINS");
+        List<String> allowedDomainList = Arrays.asList(allowedDomains.split(","));
+        Map<String, String> headers = event.getHeaders();
+        String referer = headers.get("Referer");
+        if (!isAllowedDomain(referer, allowedDomainList)) {
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(403)
+                    .withBody("Forbidden: Access is denied");
+        }
+
         QueryRequest queryRequest = RequestUtils.parseQueryRequest(event);
 
         QueryParser qp = new QueryParser("content", new StandardAnalyzer());
@@ -65,4 +81,29 @@ public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent,
             return RequestUtils.errorResponse(500, "Error");
         }
     }
+
+    private boolean isAllowedDomain(String referer, List<String> allowedDomains) {
+        // If the allowedDomains list is empty, allow all requests
+        if (allowedDomains.isEmpty() || (allowedDomains.size() == 1 && allowedDomains.get(0).isEmpty())) {
+            return true;
+        }
+
+        if (referer == null) {
+            return false;
+        }
+
+        try {
+            URI uri = new URI(referer);
+            String host = uri.getHost();
+            if (host == null) {
+                return false;
+            }
+            // Check if the host (domain name) is in the allowed domains list
+            return allowedDomains.contains(host);
+        } catch (URISyntaxException e) {
+            // Handle invalid URI syntax in the Referer header
+            return false;
+        }
+    }
+
 }

@@ -5,7 +5,7 @@ variablesResolutionMode: 20210219
 
 # NOTE: Remember to define your environment variables for the custom fields below.
 custom:
-  name: ${sls:stage}-${self:service}
+  name: ${sls:stage}-${self:service}-${env:LUCENE_SERVERLESS_APP_NAME}
   region: ${opt:region, "us-east-1"}
   vpcId: ${env:LUCENE_SERVERLESS_VPC_ID}
   subnetId1: ${env:LUCENE_SERVERLESS_SUBNET_ID1}
@@ -58,6 +58,7 @@ functions:
     package:
       artifact: target/function.zip
     environment:
+      ALLOWED_DOMAINS: "${env:LUCENE_SERVERLESS_ALLOWED_DOMAINS}"
       QUARKUS_LAMBDA_HANDLER: query
       QUARKUS_PROFILE: prod
 
@@ -124,6 +125,19 @@ functions:
     environment:
       QUARKUS_LAMBDA_HANDLER: deleteIndex
       QUARKUS_PROFILE: prod
+
+  check-index-size:
+    name: ${self:custom.name}-check-index-size
+    runtime: python3.8
+    handler: index_size.lambda_handler
+    memorySize: 128
+    timeout: 60
+    fileSystemConfig:
+      localMountPath: /mnt/data
+      arn:
+        Fn::GetAtt: [EfsAccessPoint, Arn]
+    package:
+      artifact: target/index_size.zip
 
 resources:
   Resources:

@@ -164,6 +164,24 @@
                             <descriptors>
                                 <descriptor>src/assembly/zip.xml</descriptor>
                             </descriptors>
+                            <outputDirectory>target</outputDirectory>
+                            <attach>false</attach>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>python-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>index_size</finalName>
+                            <descriptors>
+                                <descriptor>src/assembly/python-lambda.xml</descriptor>
+                            </descriptors>
+                            <outputDirectory>target</outputDirectory>
+                            <outputFileNameMapping>index_size</outputFileNameMapping>
                             <attach>false</attach>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
