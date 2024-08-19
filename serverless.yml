@@ -1,11 +1,11 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: ${env:LUCENE_SERVERLESS_ORG}
-service: lucene-serverless
+service: lucene-serverless-${env:LUCENE_SERVERLESS_APP_NAME}
 variablesResolutionMode: 20210219
 
 # NOTE: Remember to define your environment variables for the custom fields below.
 custom:
-  name: ${sls:stage}-${self:service}-${env:LUCENE_SERVERLESS_APP_NAME}
+  name: ${sls:stage}-${self:service}
   region: ${opt:region, "us-east-1"}
   vpcId: ${env:LUCENE_SERVERLESS_VPC_ID}
   subnetId1: ${env:LUCENE_SERVERLESS_SUBNET_ID1}
@@ -222,3 +222,6 @@ resources:
             OwnerUid: "1000"
             Permissions: "0777"
           Path: "/mnt/data"
+      DependsOn:
+        - EfsMountTarget1
+        - EfsMountTarget2
