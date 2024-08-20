@@ -46,7 +46,21 @@ functions:
     provisionedConcurrency: 1 # ~$2.5/m, lower cold start time
     memorySize: 256
     events:
-      - http: POST /query
+      - http:
+          path: /query
+          method: POST
+          cors:
+            origins:
+              - "http://${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}"
+              - "https://${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
     dependsOn:
       - EfsMountTarget1
       - EfsMountTarget2
