@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import dev.arseny.model.*;
 import org.jboss.logging.Logger;
+import java.util.Map;
 
 import java.io.IOException;
 
@@ -48,6 +49,9 @@ public class RequestUtils {
 
     public static QueryRequest parseQueryRequest(APIGatewayProxyRequestEvent event) {
         try {
+            LOG.info("parseQueryRequest: Received body: " + event.getBody());
+            Map<String, String> headers = event.getHeaders();
+            LOG.info("parseQueryRequest: Received headers: " + headers);
             return queryRequestReader.readValue(event.getBody());
         } catch (IOException e) {
             throw new RuntimeException("Unable to parse a query request in body", e);
