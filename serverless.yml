@@ -53,9 +53,7 @@ functions:
           request:
             template:
               application/json: |
-                {
-                    "body": "$input.body"
-                }
+                $input.json('$')
           response:
             headers:
               Access-Control-Allow-Origin: "'${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}'"
