@@ -46,7 +46,14 @@ functions:
     provisionedConcurrency: 1
     memorySize: 256
     events:
-      - http: POST /query
+      - http:
+          path: /query
+          method: post
+          cors: true
+      - http:
+          path: /query
+          method: options
+          cors: true
     dependsOn:
       - EfsMountTarget1
       - EfsMountTarget2

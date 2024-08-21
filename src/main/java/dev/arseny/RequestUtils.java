@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import dev.arseny.model.*;
 import org.jboss.logging.Logger;
 import java.util.Map;
-
+import java.util.HashMap;
 import java.io.IOException;
 
 public class RequestUtils {
@@ -21,13 +21,24 @@ public class RequestUtils {
     static ObjectReader deleteIndexRequestReader = new ObjectMapper().readerFor(DeleteIndexRequest.class);
     static ObjectReader queryRequestReader = new ObjectMapper().readerFor(QueryRequest.class);
 
+    public static Map<String, String> getCORSHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        //headers.put("Access-Control-Allow-Origin", allowedOrigin);
+        headers.put("Access-Control-Allow-Origin", "*");
+        headers.put("Access-Control-Allow-Credentials", "true");
+        //headers.put("Access-Control-Allow-Methods", "POST, OPTIONS");
+        headers.put("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD");
+        headers.put("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
+        return headers;
+    }
+
     public static APIGatewayProxyResponseEvent errorResponse(int errorCode, String message) {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         try {
-            return response.withStatusCode(errorCode).withBody(writer.writeValueAsString(new ErrorResponse(message, errorCode)));
+            return response.withStatusCode(errorCode).withHeaders(getCORSHeaders()).withBody(writer.writeValueAsString(new ErrorResponse(message, errorCode)));
         } catch (JsonProcessingException e) {
             LOG.error(e);
-            return response.withStatusCode(500).withBody("Internal error");
+            return response.withStatusCode(500).withHeaders(getCORSHeaders()).withBody("Internal error");
         }
     }
 
@@ -61,10 +72,10 @@ public class RequestUtils {
     public static APIGatewayProxyResponseEvent successResponse(QueryResponse queryResponse) throws JsonProcessingException {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         try {
-            return response.withStatusCode(200).withBody(queryResponseWriter.writeValueAsString(queryResponse));
+            return response.withStatusCode(200).withHeaders(getCORSHeaders()).withBody(queryResponseWriter.writeValueAsString(queryResponse));
         } catch (JsonProcessingException e) {
             LOG.error(e);
-            return response.withStatusCode(500).withBody("Internal error");
+            return response.withStatusCode(500).withHeaders(getCORSHeaders()).withBody("Internal error");
         }
     }
 }

@@ -36,12 +36,20 @@ public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent,
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 
-        QueryRequest queryRequest = RequestUtils.parseQueryRequest(event);
+        LOG.info("Handling body: " + event.getBody());
+        Map<String, String> headers = event.getHeaders();
+        LOG.info("Handling headers: " + headers);
+        LOG.info("Handling method: "+ event.getHttpMethod());
 
-        QueryParser qp = new QueryParser("content", new StandardAnalyzer());
+        // Check if the request is an OPTIONS request. This is necessary to allow access from Ajax.
+        if ("OPTIONS".equalsIgnoreCase(event.getHttpMethod())) {
+            APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+            return response.withStatusCode(200).withHeaders(RequestUtils.getCORSHeaders()).withBody("");
+        }
 
         QueryResponse queryResponse = new QueryResponse();
-
+        QueryRequest queryRequest = RequestUtils.parseQueryRequest(event);
+        QueryParser qp = new QueryParser("content", new StandardAnalyzer());
         try {
             Query query = qp.parse(queryRequest.getQuery());
 
