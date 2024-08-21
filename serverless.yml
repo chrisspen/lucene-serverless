@@ -43,24 +43,28 @@ functions:
     name: ${self:custom.name}-query
     runtime: ${self:custom.javaVersion}
     handler: native.handler
-    provisionedConcurrency: 1 # ~$2.5/m, lower cold start time
+    provisionedConcurrency: 1
     memorySize: 256
     events:
       - http:
           path: /query
-          method: POST
-          cors:
-            origins:
-              - "http://${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}"
-              - "https://${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}"
+          method: post
+          integration: lambda  # Non-proxy integration
+          request:
+            template:
+              application/json: |
+                $input.body
+          response:
             headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
+              Access-Control-Allow-Origin: "'${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}'"
+              Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+            template: |
+              $input.body
+            statusCodes:
+              200:
+                pattern: ''
+                template: $input.body
     dependsOn:
       - EfsMountTarget1
       - EfsMountTarget2
@@ -72,7 +76,6 @@ functions:
     package:
       artifact: target/function.zip
     environment:
-      ALLOWED_DOMAINS: "${env:LUCENE_SERVERLESS_ALLOWED_DOMAINS}"
       QUARKUS_LAMBDA_HANDLER: query
       QUARKUS_PROFILE: prod
 
