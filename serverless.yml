@@ -58,7 +58,7 @@ functions:
     package:
       artifact: target/function.zip
     environment:
-      ALLOWED_DOMAINS: "${env:LUCENE_SERVERLESS_ALLOWED_DOMAINS}"
+      DOMAIN_ORIGIN: "${env:LUCENE_SERVERLESS_QUERY_DOMAIN_ORIGIN}"
       QUARKUS_LAMBDA_HANDLER: query
       QUARKUS_PROFILE: prod
 
