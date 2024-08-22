@@ -23,10 +23,18 @@ public class RequestUtils {
 
     public static Map<String, String> getCORSHeaders() {
         Map<String, String> headers = new HashMap<>();
-        //headers.put("Access-Control-Allow-Origin", allowedOrigin);
-        headers.put("Access-Control-Allow-Origin", "*");
+
+        // Retrieve the allowedOrigin from the environment variable
+        String allowedOrigin = System.getenv("DOMAIN_ORIGIN");
+
+        // Set the Access-Control-Allow-Origin header with the retrieved allowedOrigin
+        if (allowedOrigin != null && !allowedOrigin.isEmpty()) {
+            headers.put("Access-Control-Allow-Origin", allowedOrigin);
+        } else {
+            headers.put("Access-Control-Allow-Origin", "*");
+        }
+
         headers.put("Access-Control-Allow-Credentials", "true");
-        //headers.put("Access-Control-Allow-Methods", "POST, OPTIONS");
         headers.put("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD");
         headers.put("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
         return headers;
