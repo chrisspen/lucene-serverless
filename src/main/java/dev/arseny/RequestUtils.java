@@ -8,9 +8,12 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import dev.arseny.model.*;
 import org.jboss.logging.Logger;
+import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RequestUtils {
     private static final Logger LOG = Logger.getLogger(RequestUtils.class);
@@ -21,19 +24,49 @@ public class RequestUtils {
     static ObjectReader deleteIndexRequestReader = new ObjectMapper().readerFor(DeleteIndexRequest.class);
     static ObjectReader queryRequestReader = new ObjectMapper().readerFor(QueryRequest.class);
 
-    public static Map<String, String> getCORSHeaders() {
-        Map<String, String> headers = new HashMap<>();
+    // Cache for allowed origins
+    private static List<String> cachedAllowedOriginsList;
 
-        // Retrieve the allowedOrigin from the environment variable
-        String allowedOrigin = System.getenv("DOMAIN_ORIGIN");
+    // Converts the ALLOWED_ORIGINS env string to a list of domain strings.
+    public static List<String> getAllowedOriginsList() {
+        // Check if the cache is empty
+        if (cachedAllowedOriginsList == null) {
+            // Retrieve the allowedOrigins from the environment variable
+            String allowedOrigins = System.getenv("ALLOWED_ORIGINS") != null ? System.getenv("ALLOWED_ORIGINS") : "";
 
-        // Set the Access-Control-Allow-Origin header with the retrieved allowedOrigin
-        if (allowedOrigin != null && !allowedOrigin.isEmpty()) {
-            headers.put("Access-Control-Allow-Origin", allowedOrigin);
-        } else {
-            headers.put("Access-Control-Allow-Origin", "*");
+            // Split the allowedOrigins by comma into a list, and trim spaces
+            cachedAllowedOriginsList = Arrays.stream(allowedOrigins.split(","))
+                                              .map(String::trim)
+                                              .collect(Collectors.toList());
         }
 
+        return cachedAllowedOriginsList;
+    }
+
+    // Return true if the given origin matches ALLOW_ORIGINS.
+    public static boolean isAllowedOrigin(String origin) {
+        List<String> allowedOriginsList = getAllowedOriginsList();
+        if (origin != null && allowedOriginsList.contains(origin)) {
+            return true;
+        }
+        return false;
+    }
+
+    // Returns the value that should be used in the Access-Control-Allow-Origin CORS header.
+    public static String getAllowedOriginsHeaderValue(String origin) {
+        List<String> allowedOriginsList = getAllowedOriginsList();
+        if (origin != null && allowedOriginsList.contains(origin)) {
+            return origin;
+        }
+        if(!allowedOriginsList.isEmpty()){
+            return allowedOriginsList.get(0);
+        }
+        return "*";
+    }
+
+    public static Map<String, String> getCORSHeaders(String origin) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Access-Control-Allow-Origin", getAllowedOriginsHeaderValue(origin));
         headers.put("Access-Control-Allow-Credentials", "true");
         headers.put("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD");
         headers.put("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
@@ -43,10 +76,10 @@ public class RequestUtils {
     public static APIGatewayProxyResponseEvent errorResponse(int errorCode, String message) {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         try {
-            return response.withStatusCode(errorCode).withHeaders(getCORSHeaders()).withBody(writer.writeValueAsString(new ErrorResponse(message, errorCode)));
+            return response.withStatusCode(errorCode).withBody(writer.writeValueAsString(new ErrorResponse(message, errorCode)));
         } catch (JsonProcessingException e) {
             LOG.error(e);
-            return response.withStatusCode(500).withHeaders(getCORSHeaders()).withBody("Internal error");
+            return response.withStatusCode(500).withBody("Internal error");
         }
     }
 
@@ -80,10 +113,10 @@ public class RequestUtils {
     public static APIGatewayProxyResponseEvent successResponse(QueryResponse queryResponse) throws JsonProcessingException {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         try {
-            return response.withStatusCode(200).withHeaders(getCORSHeaders()).withBody(queryResponseWriter.writeValueAsString(queryResponse));
+            return response.withStatusCode(200).withBody(queryResponseWriter.writeValueAsString(queryResponse));
         } catch (JsonProcessingException e) {
             LOG.error(e);
-            return response.withStatusCode(500).withHeaders(getCORSHeaders()).withBody("Internal error");
+            return response.withStatusCode(500).withBody("Internal error");
         }
     }
 }

@@ -36,15 +36,32 @@ public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent,
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 
-        LOG.info("Handling body: " + event.getBody());
         Map<String, String> headers = event.getHeaders();
+
+        // Log all headers.
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            LOG.info("Header Key: " + entry.getKey() + ", Value: " + entry.getValue());
+        }
+        LOG.info("Handling body: " + event.getBody());
         LOG.info("Handling headers: " + headers);
         LOG.info("Handling method: "+ event.getHttpMethod());
+
+        // Extract the request origin
+        String origin = headers.get("Origin");
+        if (origin == null) {
+            origin = headers.get("origin");
+        }
+        LOG.info("Request origin: " + origin);
 
         // Check if the request is an OPTIONS request. This is necessary to allow access from Ajax.
         if ("OPTIONS".equalsIgnoreCase(event.getHttpMethod())) {
             APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-            return response.withStatusCode(200).withHeaders(RequestUtils.getCORSHeaders()).withBody("");
+            return response.withStatusCode(200).withHeaders(RequestUtils.getCORSHeaders(origin)).withBody("");
+        }
+
+        if (!RequestUtils.isAllowedOrigin(origin)){
+            LOG.info("Origin is forbidden: " + origin);
+            return RequestUtils.errorResponse(403, "Forbidden").withHeaders(RequestUtils.getCORSHeaders(origin));
         }
 
         QueryResponse queryResponse = new QueryResponse();
@@ -71,11 +88,11 @@ public class QueryHandler implements RequestHandler<APIGatewayProxyRequestEvent,
 
             queryResponse.setTotalDocuments((topDocs.totalHits.relation == TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO ? "≥" : "") + topDocs.totalHits.value);
 
-            return RequestUtils.successResponse(queryResponse);
+            return RequestUtils.successResponse(queryResponse).withHeaders(RequestUtils.getCORSHeaders(origin));
         } catch (ParseException | IOException e) {
             LOG.error(e);
 
-            return RequestUtils.errorResponse(500, "Error");
+            return RequestUtils.errorResponse(500, "Error").withHeaders(RequestUtils.getCORSHeaders(origin));
         }
     }
 
